@@ -2,7 +2,7 @@ module influxdb;
 
 import std.conv, std.string;
 import std.algorithm : map, joiner, sort;
-
+import std.traits;
 struct InfluxData
 {
     string[string] data;
@@ -16,6 +16,12 @@ struct InfluxData
         }
         return data.keys.sort!().map!(key => key.replace(" ", "\\ ") ~ "=" ~ data[key]).joiner(",").to!string;
     }
+    
+    void opIndexAssign(T)(T value, string name)
+    {
+        data[name] = value.to!string;
+    }
+    
 }
 
 unittest
@@ -32,8 +38,38 @@ unittest
 
 struct InfluxValues
 {
-    InfluxData data;
-    alias data this;
+    InfluxData id;
+    alias id this;
+
+    //Integer types need an additional i suffix
+    void opIndexAssign(T)(T value, string name)
+    if(isIntegral!T)
+    {
+        id[name] = value.to!string ~ "i";
+    }
+
+    void opIndexAssign(bool value, string name)
+    {
+        id[name] = value ? "True" : "False";
+    }
+
+    void opIndexAssign(T)(T value, string name)
+     if(! isIntegral!T)
+    {
+        data[name] = value.to!string;
+    }
+
+}
+
+unittest
+{
+    auto v = InfluxValues();
+    v["myInt"] = 4;
+    v["myFloat"] = 0.2;
+    v["myBool"] = true;
+    string expected = "myBool=True,myFloat=0.2,myInt=4i";
+    assert(v.toInflux() == expected, format("Error %s should be %s", v.toInflux(),
+        expected));
 }
 
 struct Measurement
