@@ -3,6 +3,7 @@ module influxdb.measurement;
 import std.conv, std.string;
 import std.algorithm : map, joiner, sort;
 import std.traits;
+import std.datetime;
 
 struct InfluxData
 {
@@ -81,7 +82,7 @@ struct Measurement
     private
     {
         string series;
-        ulong timestamp;
+        long timestamp;
         InfluxData tags;
 
     }
@@ -92,6 +93,18 @@ struct Measurement
     this(string name)
     {
         series = name;
+    }
+    
+    void setTimestamp(long ts)
+    {
+        timestamp = ts;
+    }
+
+    
+    void setTimestamp(SysTime t)
+    {
+        import helpers : toUnixNs;
+        setTimestamp( t.toUnixNs );
     }
 
     //adds a tag and its value;
