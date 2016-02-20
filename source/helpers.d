@@ -1,5 +1,4 @@
 module helpers;
-
 import std.datetime;
 long toUnixNs(SysTime t)
 {

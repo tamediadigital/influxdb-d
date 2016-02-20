@@ -72,6 +72,8 @@ unittest
     assert(v.toInflux() == expected, format("Error %s should be %s", v.toInflux(), expected));
 }
 
+
+import helpers : toUnixNs;
 //creates a measurement
 // Measurement m = Measurement("mySeries");
 // m["aBool"] = true;
@@ -94,6 +96,12 @@ struct Measurement
     {
         series = name;
     }
+
+    this(string name, SysTime ts)
+    {
+        series = name;
+        setTimestamp(ts);
+    }
     
     void setTimestamp(long ts)
     {
@@ -103,7 +111,7 @@ struct Measurement
     
     void setTimestamp(SysTime t)
     {
-        import helpers : toUnixNs;
+        
         setTimestamp( t.toUnixNs );
     }
 
