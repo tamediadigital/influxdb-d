@@ -65,7 +65,6 @@ final class InfluxClient
         string dta = m.toInfluxdbLine();
         import std.stdio;
 
-        writeln(dta);
         getConnection().write(dta);
     }
 }

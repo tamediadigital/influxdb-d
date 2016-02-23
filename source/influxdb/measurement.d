@@ -17,7 +17,7 @@ struct InfluxData
             return "";
         }
         return data.keys.sort!().map!(key => key.replace(" ",
-                "\\ ") ~ "=" ~ data[key]).joiner(",").to!string;
+                "\\ ") ~ "=" ~ data[key].replace(" ","\\ ")).joiner(",").to!string;
     }
 
     void opIndexAssign(T)(T value, string name)
