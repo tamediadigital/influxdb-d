@@ -63,9 +63,60 @@ final class InfluxClient
     void sendMeasurement(Measurement m)
     {
         string dta = m.toInfluxdbLine();
-        import std.stdio;
-
         getConnection().write(dta);
+    }
+
+    void sendMeasurements(Measurement[] m...)
+    {
+        import std.algorithm : map;
+        import std.array : array, join ;
+        string dta = m.map!( point => point.toInfluxdbLine()).array().join("\n");
+        getConnection().write(dta);
+    }
+}
+
+
+import vibe.http.client;
+import vibe.stream.operations;
+import vibe.core.log;
+final class InfluxHTTPClient
+{
+    private
+    {
+        string m_url;
+        string m_db;
+    }
+    this(string url, string db)
+    {
+        m_url = url;
+        m_db = db;
+    }
+
+    void sendMeasurement(Measurement m)
+    {
+       sendMeasurements([m]);
+    }
+
+    void sendMeasurements(Measurement[] m...)
+    {
+        import std.algorithm : map;
+        import std.array : array, join ;
+        string dta = m.map!( point => point.toInfluxdbLine()).array().join("\n");
+
+        requestHTTP(m_url ~ "/write?db=" ~m_db ,
+            (scope req){
+                req.method = HTTPMethod.POST;
+                req.writeBody(cast(ubyte[]) dta);
+            },
+            (scope res){
+                if (res.statusCode != 204)
+                {
+                    logError("Failed to send data. return code: %s", res.statusCode);
+                    throw new Exception(res.bodyReader.readAllUTF8());
+                }
+                res.dropBody();
+            }
+        );
     }
 }
 
@@ -73,7 +124,7 @@ unittest
 {
 
     //needs an influxdb running
-    InfluxClient c = new InfluxClient();
+    InfluxHTTPClient c = new InfluxHTTPClient("http://localhost:8086", "mydb");
 
     auto m = Measurement("xxx2");
     m["val1"] = 44L;
@@ -84,6 +135,6 @@ unittest
     m2["bools"] = b;
     m2["bools2"] = false;
     m2.addTag("tagKey", "tagVal2");
-    c.sendMeasurement(m);
-    c.sendMeasurement(m2);
+    c.sendMeasurements(m, m2);
+
 }
