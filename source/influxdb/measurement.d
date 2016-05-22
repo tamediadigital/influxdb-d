@@ -129,4 +129,5 @@ struct Measurement
         string sep = (tags.length > 0) ? "," : "";
         return format("%s%s%s %s %s", series, sep, tags.toInflux(), values.toInflux(), ts);
     }
+    alias toString = toInfluxdbLine;
 }
